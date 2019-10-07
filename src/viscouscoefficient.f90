@@ -212,14 +212,19 @@ subroutine ViscousCoeff_method1(utp,vtp)
 
                     deno = max( deno, 1d-20 )
                      
-                    zetaC(i,j) =  ( Pp(i,j)/denomin ) &
+                    zetaC(i,j) =  ( (Pp(i,j)+Pt(i,j))/denomin ) &
                          *( tanh(denomin*(1/deno)))
+                         
+                    P(i,j) = ((( Pp(i,j)-Pt(i,j))/denomin ) &
+                         *tanh(denomin*(1/deno))) *deno 
 
                  elseif ( regularization .eq. 'Kreyscher' ) then
                         
                     denoT = deno + denomin
 
-                    zetaC(i,j) = Pp(i,j)/denoT 
+                    zetaC(i,j) = (Pp(i,j)+Pt(i,j))/denoT 
+                    
+                    P(i,j) = ((Pp(i,j) - Pt(i,j)) / denoT) * deno 
 
                  else
                         
@@ -227,8 +232,6 @@ subroutine ViscousCoeff_method1(utp,vtp)
                     stop
                         
                  endif
-
-                 P(i,j) = zetaC(i,j)*deno ! replacement pressure 
 
                  etaC(i,j)  = zetaC(i,j) * ell_2
                      
@@ -429,26 +432,29 @@ subroutine ViscousCoeff_method2(utp,vtp)
 
                     deno = max( deno, 1d-20 )
                      
-                    zetaC(i,j) =  ( Pp(i,j)/denomin ) &
+                    zetaC(i,j) =  ( (Pp(i,j)+Pt(i,j))/denomin ) &
                          *( tanh(denomin*(1/deno)))
+                         
+                    P(i,j) = ((( Pp(i,j)-Pt(i,j))/denomin ) &
+                         *tanh(denomin*(1/deno))) *deno 
 
                  elseif ( regularization .eq. 'Kreyscher' ) then
                         
                     denoT = deno + denomin
 
-                    zetaC(i,j) = Pp(i,j)/denoT 
+                    zetaC(i,j) = (Pp(i,j)+Pt(i,j))/denoT 
+                    
+                    P(i,j) = ((Pp(i,j) - Pt(i,j)) / denoT) * deno 
 
                  else
                         
                     print *, 'WRONG REGULARIZATION'
                     stop
-                    
+                        
                  endif
 
-                 P(i,j) = zetaC(i,j)*deno ! replacement pressure 
-
                  etaC(i,j)  = zetaC(i,j) * ell_2
-                        
+                     
               elseif ( rheo .eq. 2 ) then ! triangle, jfl p.1124
 
                  stop
@@ -520,7 +526,8 @@ subroutine ViscousCoeff_method2(utp,vtp)
                  dvdy = ( (vtp(i-1,j+1) + vtp(i,j+1)) * maskB(i,j+1) - &
                       (vtp(i-1,j-1) + vtp(i,j-1)) * maskB(i,j-1) ) / (4d0*Deltax)
                      
-                 pnode = ( Pp(i-1,j) + Pp(i,j) + Pp(i,j-1) + Pp(i-1,j-1) ) / 4d0 
+                 pnode = ( Pp(i-1,j) + Pp(i,j) + Pp(i,j-1) + Pp(i-1,j-1) + & 
+                           Pt(i-1,j) + Pt(i,j) + Pt(i,j-1) + Pt(i-1,j-1) ) / 4d0 
                      
               elseif (summaskC .eq. 3) then 
 
@@ -536,7 +543,8 @@ subroutine ViscousCoeff_method2(utp,vtp)
                     dvdy = ( -vtp(i-1,j-1) - vtp(i,j-1) + &
                          ( vtp(i-1,j-2) + vtp(i,j-2) ) * maskB(i,j-2)/4d0 ) / Deltax
                         
-                    pnode = ( Pp(i,j) + Pp(i,j-1) + Pp(i-1,j-1) ) / 3d0 ! check ca 
+                    pnode = ( Pp(i,j) + Pp(i,j-1) + Pp(i-1,j-1) + & ! check ca 
+                              Pt(i,j) + Pt(i,j-1) + Pt(i-1,j-1) ) / 3d0 ! check ca 
 
                  elseif (maskC(i,j) .eq. 0) then !case 3
 ! ox
@@ -550,7 +558,8 @@ subroutine ViscousCoeff_method2(utp,vtp)
                     dvdy = ( -vtp(i-1,j-1) - vtp(i,j-1) + &
                          ( vtp(i-1,j-2) + vtp(i,j-2) ) * maskB(i,j-2)/4d0 ) / Deltax
 
-                    pnode = ( Pp(i-1,j) + Pp(i,j-1) + Pp(i-1,j-1) ) / 3d0
+                    pnode = ( Pp(i-1,j) + Pp(i,j-1) + Pp(i-1,j-1) + & 
+                              Pt(i-1,j) + Pt(i,j-1) + Pt(i-1,j-1) ) / 3d0
 
                  elseif (maskC(i,j-1) .eq. 0) then !case 5
 ! oo                                                          
@@ -564,7 +573,8 @@ subroutine ViscousCoeff_method2(utp,vtp)
                     dvdy = ( vtp(i-1,j+1) + vtp(i,j+1) - &
                          ( vtp(i-1,j+2) + vtp(i,j+2) ) * maskB(i,j+2)/4d0 ) / Deltax
     
-                    pnode = ( Pp(i-1,j) + Pp(i,j) + Pp(i-1,j-1) ) / 3d0
+                    pnode = ( Pp(i-1,j) + Pp(i,j) + Pp(i-1,j-1) + &
+                              Pt(i-1,j) + Pt(i,j) + Pt(i-1,j-1) ) / 3d0
 
                  elseif (maskC(i-1,j-1) .eq. 0) then !case 4
 ! oo                                                            
@@ -578,8 +588,8 @@ subroutine ViscousCoeff_method2(utp,vtp)
                     dvdy = ( vtp(i-1,j+1) + vtp(i,j+1) - &
                          ( vtp(i-1,j+2) + vtp(i,j+2) ) * maskB(i,j+2)/4d0 ) / Deltax
 
-                    pnode = ( Pp(i-1,j) + Pp(i,j) + Pp(i,j-1) ) / 3d0
-
+                    pnode = ( Pp(i-1,j) + Pp(i,j) + Pp(i,j-1) + &
+                              Pt(i-1,j) + Pt(i,j) + Pt(i,j-1) ) / 3d0
                  else
 
                     print *, 'wowowo1'
@@ -600,7 +610,8 @@ subroutine ViscousCoeff_method2(utp,vtp)
                          ( utp(i+2,j) + utp(i+2,j-1) ) * maskB(i+2,j)/4d0 ) / Deltax
 		      
                     dvdy = 0d0
-                    pnode = ( Pp(i,j) + Pp(i,j-1) )/2d0
+                    pnode = ( Pp(i,j) + Pp(i,j-1) + &
+                              Pt(i,j) + Pt(i,j-1) )/2d0
 
                  elseif(maskC(i,j) .eq. 0 .and. & !case 6
                       maskC(i,j-1) .eq. 0) then
@@ -613,7 +624,8 @@ subroutine ViscousCoeff_method2(utp,vtp)
                          ( utp(i-2,j) + utp(i-2,j-1) ) * maskB(i-2,j)/4d0 ) / Deltax
 
                     dvdy = 0d0
-                    pnode = ( Pp(i-1,j) + Pp(i-1,j-1) )/2d0
+                    pnode = ( Pp(i-1,j) + Pp(i-1,j-1) + &
+                              Pt(i-1,j) + Pt(i-1,j-1) )/2d0
 
                  elseif(maskC(i-1,j) .eq. 0 .and. & !case 8           
                       maskC(i,j) .eq. 0) then
@@ -625,7 +637,8 @@ subroutine ViscousCoeff_method2(utp,vtp)
                     dvdy = ( -vtp(i-1,j-1) - vtp(i,j-1) + &
                          ( vtp(i-1,j-2) + vtp(i,j-2) ) * maskB(i,j-2)/4d0 ) / Deltax
                     
-                    pnode = ( Pp(i-1,j-1) + Pp(i,j-1) )/2d0
+                    pnode = ( Pp(i-1,j-1) + Pp(i,j-1) + &
+			      Pt(i-1,j-1) + Pt(i,j-1) )/2d0
 
                  elseif(maskC(i,j-1) .eq. 0 .and. & !case 9
                       maskC(i-1,j-1) .eq. 0) then
@@ -637,7 +650,7 @@ subroutine ViscousCoeff_method2(utp,vtp)
                     dvdy = ( vtp(i-1,j+1) + vtp(i,j+1) - &
                          ( vtp(i-1,j+2) + vtp(i,j+2) ) * maskB(i,j+2)/4d0 ) / Deltax
                         
-                    pnode = ( Pp(i-1,j) + Pp(i,j) ) / 2d0
+                    pnode = ( Pp(i-1,j) + Pp(i,j) + Pt(i-1,j) + Pt(i,j)) / 2d0
 
                  elseif(maskC(i-1,j) .eq. 0 .and. & !case 15
                       maskC(i,j-1) .eq. 0) then
@@ -935,17 +948,22 @@ subroutine ViscousCoeff_method3_and_4(utp,vtp)
                  endif
 
                  if ( regularization .eq. 'tanh' ) then
-                        
+
                     deno = max( deno, 1d-20 )
                      
-                    zetaC(i,j) =  ( Pp(i,j)/denomin ) &
+                    zetaC(i,j) =  ( (Pp(i,j)+Pt(i,j))/denomin ) &
                          *( tanh(denomin*(1/deno)))
+                         
+                    P(i,j) = ((( Pp(i,j)-Pt(i,j))/denomin ) &
+                         *tanh(denomin*(1/deno))) *deno 
 
                  elseif ( regularization .eq. 'Kreyscher' ) then
                         
                     denoT = deno + denomin
 
-                    zetaC(i,j) = Pp(i,j)/denoT 
+                    zetaC(i,j) = (Pp(i,j)+Pt(i,j))/denoT 
+                    
+                    P(i,j) = ((Pp(i,j) - Pt(i,j)) / denoT) * deno 
 
                  else
                         
@@ -954,11 +972,8 @@ subroutine ViscousCoeff_method3_and_4(utp,vtp)
                         
                  endif
 
-                 P(i,j) = zetaC(i,j)*deno ! replacement pressure 
-
                  etaC(i,j)  = zetaC(i,j) * ell_2
-
-                        
+                     
               elseif ( rheo .eq. 2 ) then ! triangle, jfl p.1124
 
                  stop
