@@ -57,7 +57,7 @@
 
 ! Ellipse (rheology = 1)
       Pstar      =  27.5d03            ! ice yield stress [N/m2] 
-      Tens       =  0d0            ! sea ice tensile strength [N/m2] #mp#
+      Tens       =  0.0d0            ! sea ice tensile strength [N/m2] #mp#
       ellipticity = 2.0d0            ! ellipticity for ellipse rheology 
       
 ! Triangle (rheology = 2)       
@@ -116,20 +116,114 @@
       OcnTemp    = 'calculated'      ! MonthlyClim, specified,calculated
       calc_month_mean = .false.      ! to calc monthly mean fields
       runoff     = .false.
-
+      
+!------------------------------------------------------------------------
+!     Grid parameters: resolution, land mask (grid center), velocity mask (node)
+!------------------------------------------------------------------------      
+     
       if ((nx == 518) .and. (ny == 438)) then
-         Deltax     =  10d03           ! grid size [m] 
+! Arctic domain, 10km resolution, load from mask file   
+
+         Deltax     =  10d03           ! grid size [m]              
+         write(cdelta, '(I2)') int(Deltax)/1000      
+         open (unit = 20, file = 'src/mask'//cdelta//'.dat', status = 'old')
+         do j = 0, ny+1               ! land mask
+           read (20,10) ( maskC(i,j), i = 0, nx+1 )
+         enddo     
+         close (unit = 20)
+
       elseif  ((nx == 258) .and. (ny == 218)) then
+! Arctic domain, 20km resolution, load from mask file       
          Deltax     =  20d03           ! grid size [m] 
+         write(cdelta, '(I2)') int(Deltax)/1000      
+         open (unit = 20, file = 'src/mask'//cdelta//'.dat', status = 'old')
+         do j = 0, ny+1               ! land mask
+           read (20,10) ( maskC(i,j), i = 0, nx+1 )
+         enddo     
+         close (unit = 20)     
+         
       elseif  ((nx == 128) .and. (ny == 108)) then
-         Deltax     =  40d03           ! grid size [m] 
+! Arctic domain, 40km resolution, load from mask file       
+         Deltax     =  40d03           ! grid size [m]  
+         write(cdelta, '(I2)') int(Deltax)/1000      
+         open (unit = 20, file = 'src/mask'//cdelta//'.dat', status = 'old')
+         do j = 0, ny+1               ! land mask
+           read (20,10) ( maskC(i,j), i = 0, nx+1 )
+         enddo     
+         close (unit = 20)
+         
       elseif  ((nx == 63) .and. (ny == 53)) then
-         Deltax     =  80d03           ! grid size [m] 
-      else
+! Arctic domain, 80km resolution, load from mask file      
+         Deltax     =  80d03           ! grid size [m]                   
+         write(cdelta, '(I2)') int(Deltax)/1000      
+         open (unit = 20, file = 'src/mask'//cdelta//'.dat', status = 'old')
+         do j = 0, ny+1               ! land mask
+           read (20,10) ( maskC(i,j), i = 0, nx+1 )
+         enddo     
+         close (unit = 20)
+         
+      elseif ((nx == 100) .and. (ny == 250)) then
+! Uniaxial compression experiment, 1.0 km resolution. Mask produced below:
+	 Deltax     =  1d03           ! grid size [m] 	 
+	 
+	 !Make mask:	 
+         do i = 0, nx+1
+         do j = 0, ny+1
+           maskC(i,j) = 1
+           if ((j .lt. 1)) then
+              maskC(i,j) = 0
+           endif
+         enddo
+         enddo
+	 
+      elseif ((nx == 102) .and. (ny == 402)) then
+! Ideal ice bridge experiment, 2.0 km resolution. Mask produced below:
+	 Deltax     =  2d03           ! grid size [m] 	 
+	 
+	 !Make mask:	 
+         do i = 0, nx+1
+         do j = 0, ny+1 
+           maskC(i,j) = 1
+	   if (( i .gt. 66 ) .and. ((j .gt. (151)) .and. (j .lt. 252+1)) ) then
+              maskC(i,j) = 0 
+           elseif (( i .lt. (35)+1 ) .and. ((j .gt. (151)) .and. (j .lt. 252+1))) then
+              maskC(i,j) = 0
+           elseif (j .lt.  2) then
+              maskC(i,j) = 0 
+           elseif (j .gt. ny+1) then
+              maskC(i,j) = 0
+           elseif ((i .eq. 0 )) then
+              maskC(i,j) = 2
+           elseif ((i .eq. nx+1)) then
+              maskC(i,j) = 2
+           endif 
+         enddo
+         enddo
+	 
+      else	 
          write(*,*) "Wrong grid size dimenions.", nx, ny
          STOP
       endif
 
+
+10   format (1x,1000(i1)) ! different format because of the grid      
+      
+!-----------------------------------------
+! velocity mask:
+
+      do j = 0, ny+2                   
+         do i = 0, nx+2
+            maskB(i,j) = 0
+         enddo
+      enddo
+
+
+      do j = 1, ny+1
+         do i = 1, nx+1
+            maskB(i,j) = ( maskC(i,j)   + maskC(i-1,j) +          &
+                             maskC(i,j-1) + maskC(i-1,j-1) ) / 4           
+         enddo
+      enddo
       Deltax2 = Deltax**2d0
 
 !------------------------------------------------------------------------
@@ -320,39 +414,8 @@
       Ksens_ao  = rhoair   * Csens_oa * Cpair    ! cts of sensible heat
 
 !------------------------------------------------------------------------
-!     Grid parameter: land mask (grid center), velocity mask (node)
+!     Bathymetry (for basal stress)
 !------------------------------------------------------------------------
-
-      write(cdelta, '(I2)') int(Deltax)/1000
-
-      open (unit = 20, file = 'src/mask'//cdelta//'.dat', status = 'old')
-
-      do j = 0, ny+1               ! land mask
-         read (20,10) ( maskC(i,j), i = 0, nx+1 )
-      enddo
-     
-      close (unit = 20)
-
-10   format (1x,1000(i1)) ! different format because of the grid      
-      
-!-----------------------------------------
-
-      do j = 0, ny+2                   ! velocity mask
-         do i = 0, nx+2
-            maskB(i,j) = 0
-         enddo
-      enddo
-
-
-      do j = 1, ny+1
-         do i = 1, nx+1
-
-            maskB(i,j) = ( maskC(i,j)   + maskC(i-1,j) +          &
-                             maskC(i,j-1) + maskC(i-1,j-1) ) / 4
-           
-         enddo
-      enddo
-
       if (BasalStress) then ! LF ice basal stress param is used
       
       open (unit=21,file='src/bathymetry'//cdelta//'km.dat', status = 'old')
@@ -497,6 +560,4 @@
 
       return
     end subroutine par_get
-
-
-
+    

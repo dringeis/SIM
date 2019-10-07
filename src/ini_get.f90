@@ -50,6 +50,16 @@ subroutine ini_get (restart, expno_r, restart_date)
                if (i.eq.0 .or. i.eq.nx+1 .or. j.eq.0 .or. j.eq.ny+1) &
                          A(i,j) = 0d0
 
+!     Compression experiment: we set bands of open water at the top and sides
+               if ((nx == 100) .and. (ny == 250)) then
+                  if (i .lt. 21 .or. i .gt. 80) h(i,j) = 0d0
+                  if (i .lt. 21 .or. i .gt. 80) A(i,j) = 0d0
+                  if (j .gt. 250) h(i,j) = 0d0
+                  if (j .gt. 250) A(i,j) = 0d0 
+	       endif
+
+
+
                tracer(i,j,1) = h(i,j)
                tracer(i,j,2) = A(i,j)
 
