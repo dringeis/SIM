@@ -97,6 +97,8 @@
       ntracer    =  2                ! total number of ice tracer
 
       BndyCond   = 'noslip'          ! noslip
+      Periodic_x = 0		     ! 0:open, 1:periodic at lateral boundaries
+      Periodic_y = 0		     ! 0:open, 1:periodic at lateral boundaries
       DragLaw    = 'square'          ! square
       Rheology   = 1                 ! ellipse = 1, triangle = 2
       linearization = 'Zhang'        ! Tremblay, Zhang
@@ -121,8 +123,8 @@
 !     Grid parameters: resolution, land mask (grid center), velocity mask (node)
 !------------------------------------------------------------------------      
      
+! Arctic domain, 10km resolution  
       if ((nx == 518) .and. (ny == 438)) then
-! Arctic domain, 10km resolution, load from mask file   
 
          Deltax     =  10d03           ! grid size [m]              
          write(cdelta, '(I2)') int(Deltax)/1000      
@@ -132,8 +134,8 @@
          enddo     
          close (unit = 20)
 
+! Arctic domain, 20km resolution      
       elseif  ((nx == 258) .and. (ny == 218)) then
-! Arctic domain, 20km resolution, load from mask file       
          Deltax     =  20d03           ! grid size [m] 
          write(cdelta, '(I2)') int(Deltax)/1000      
          open (unit = 20, file = 'src/mask'//cdelta//'.dat', status = 'old')
@@ -142,8 +144,8 @@
          enddo     
          close (unit = 20)     
          
-      elseif  ((nx == 128) .and. (ny == 108)) then
-! Arctic domain, 40km resolution, load from mask file       
+! Arctic domain, 40km resolution 
+      elseif  ((nx == 128) .and. (ny == 108)) then     
          Deltax     =  40d03           ! grid size [m]  
          write(cdelta, '(I2)') int(Deltax)/1000      
          open (unit = 20, file = 'src/mask'//cdelta//'.dat', status = 'old')
@@ -152,8 +154,8 @@
          enddo     
          close (unit = 20)
          
-      elseif  ((nx == 63) .and. (ny == 53)) then
-! Arctic domain, 80km resolution, load from mask file      
+! Arctic domain, 80km resolution 
+      elseif  ((nx == 63) .and. (ny == 53)) then    
          Deltax     =  80d03           ! grid size [m]                   
          write(cdelta, '(I2)') int(Deltax)/1000      
          open (unit = 20, file = 'src/mask'//cdelta//'.dat', status = 'old')
@@ -162,8 +164,10 @@
          enddo     
          close (unit = 20)
          
+! Uniaxial compression experiment.
+!Note: the water turning angles should beset to 0, and all forcings should be specified.
+!      Does not converge for large Deltat (we use 10d0).
       elseif ((nx == 100) .and. (ny == 250)) then
-! Uniaxial compression experiment, 1.0 km resolution. Mask produced below:
 	 Deltax     =  1d03           ! grid size [m] 	 
 	 
 	 !Make mask:	 
@@ -177,10 +181,10 @@
          enddo
 	 
       elseif ((nx == 102) .and. (ny == 402)) then
-! Ideal ice bridge experiment, 2.0 km resolution. Mask produced below:
+! Ideal ice bridge experiment, 2.0 km resolution.
 	 Deltax     =  2d03           ! grid size [m] 	 
 	 
-	 !Make mask:	 
+	 !Mask:	 
          do i = 0, nx+1
          do j = 0, ny+1 
            maskC(i,j) = 1
@@ -192,10 +196,6 @@
               maskC(i,j) = 0 
            elseif (j .gt. ny+1) then
               maskC(i,j) = 0
-           elseif ((i .eq. 0 )) then
-              maskC(i,j) = 2
-           elseif ((i .eq. nx+1)) then
-              maskC(i,j) = 2
            endif 
          enddo
          enddo
