@@ -72,6 +72,12 @@ subroutine ini_get (restart, expno_r, restart_date)
                etaC(i,j)= 0d0
                zetaC(i,j) = 0d0
                etaB(i,j)  = 0d0
+               GammaMEB(i,j) = 1d0
+               GammaMEB_B(i,j) = 1d0
+               dam(i,j) = 0d0
+               damB(i,j) = 0d0
+               dfactor(i,j) = 1d0
+               dfactorB(i,j) = 1d0
 
                Ta(i,j)  =  273.15d0              ! air temp
 
