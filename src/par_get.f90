@@ -100,7 +100,7 @@
       Periodic_x = 0		     ! 0:open, 1:periodic at lateral boundaries
       Periodic_y = 0		     ! 0:open, 1:periodic at lateral boundaries
       DragLaw    = 'square'          ! square
-      Rheology   = 1                 ! ellipse = 1, triangle = 2
+      Rheology   = 1                 ! ellipse = 1, triangle = 2, MEB = 3
       linearization = 'Zhang'        ! Tremblay, Zhang
       regularization = 'tanh'        ! tanh, Kreyscher
       visc_method = 2                ! see viscousCoeff routine for details
@@ -168,9 +168,9 @@
 !Note: the water turning angles should beset to 0, and all forcings should be specified.
 !      Does not converge for large Deltat (we use 10d0).
       elseif ((nx == 100) .and. (ny == 250)) then
-	 Deltax     =  1d03           ! grid size [m] 	 
-	 
-	 !Make mask:	 
+          Deltax     =  1d03           ! grid size [m]
+         
+         !Make mask:
          do i = 0, nx+1
          do j = 0, ny+1
            maskC(i,j) = 1
@@ -182,13 +182,13 @@
 	 
       elseif ((nx == 102) .and. (ny == 402)) then
 ! Ideal ice bridge experiment, 2.0 km resolution.
-	 Deltax     =  2d03           ! grid size [m] 	 
-	 
-	 !Mask:	 
+         Deltax     =  2d03           ! grid size [m] 	 
+
+         !Mask:
          do i = 0, nx+1
          do j = 0, ny+1 
            maskC(i,j) = 1
-	   if (( i .gt. 66 ) .and. ((j .gt. (151)) .and. (j .lt. 252+1)) ) then
+           if (( i .gt. 66 ) .and. ((j .gt. (151)) .and. (j .lt. 252+1)) ) then
               maskC(i,j) = 0 
            elseif (( i .lt. (35)+1 ) .and. ((j .gt. (151)) .and. (j .lt. 252+1))) then
               maskC(i,j) = 0
@@ -199,7 +199,7 @@
            endif 
          enddo
          enddo
-	 
+ 
       else	 
          write(*,*) "Wrong grid size dimenions.", nx, ny
          STOP
@@ -325,7 +325,8 @@
          stop
       endif
       
-      if ( Rheology .ne. 1 .and. Rheology .ne. 2) then
+      if ( Rheology .ne. 1 .and. Rheology .ne. 2                       &
+                                 .and. Rheology .ne. 3) then
          print *, 'Wrong Rheology chosen by user'
          stop
       endif

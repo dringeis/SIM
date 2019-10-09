@@ -43,7 +43,7 @@
                 Periodic_x,     & ! open or periodic condition in x 
                 Periodic_y,     & ! open or periodic condition in y 
                 DragLaw,        & ! linear, square, linearH or squareH
-		Rheology,       & ! ellipse, triangle
+		Rheology,       & ! ellipse, triangle, MEB
 		IMEX,           & ! 0: standard (splitting in time), 1 and 2: IMEX
                 BDF,            & ! 0: standard, 1: Backward diff formula (2nd order)
 		visc_method,    & ! choice of calc of visc coeff
