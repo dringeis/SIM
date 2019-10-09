@@ -97,15 +97,15 @@ subroutine ViscousCoeff_method1(utp,vtp)
   include 'CB_mask.h'
   include 'CB_options.h'
 
-  integer i, j, rheo
+  integer i, j, rheo, peri
 
   double precision dudx, dvdy, dudy, dvdx, deno, denoT, denomin
 
   double precision utp(0:nx+2,0:ny+2), vtp(0:nx+2,0:ny+2)
 
   denomin = 2d-09 ! Hibler, 1979
-
   rheo = Rheology ! define local variable to speed up the code
+  peri = Periodic_x + Periodic_y ! =1 if we have periodic conditions
 
 !------------------------------------------------------------------------
 !     free slip boundary condition:
@@ -134,7 +134,9 @@ subroutine ViscousCoeff_method1(utp,vtp)
  
         enddo
      enddo
-
+     
+     if (peri .ne. 0) call periodicBC(utp,vtp)
+     
      do i = 1, nx
         do j = 1, ny
 
@@ -250,12 +252,12 @@ subroutine ViscousCoeff_method1(utp,vtp)
 
      do i = 1, nx+1
 
-        if (maskC(i,0) .eq. 1) then
+        if (maskC(i,0) .eq. 1 .and. Periodic_y .eq. 0) then
            etaC(i,1)  = 0d0
            zetaC(i,1) = 0d0
         endif
             
-        if (maskC(i,ny+1) .eq. 1) then
+        if (maskC(i,ny+1) .eq. 1 .and. Periodic_y .eq. 0) then
            etaC(i,ny)  = 0d0
            zetaC(i,ny) = 0d0
         endif
@@ -264,18 +266,20 @@ subroutine ViscousCoeff_method1(utp,vtp)
          
      do j = 1, ny+1
             
-        if (maskC(0,j) .eq. 1) then   
+        if (maskC(0,j) .eq. 1 .and. Periodic_x .eq. 0) then   
            etaC(1,j)  = 0d0
            zetaC(1,j) = 0d0
         endif
             
-        if (maskC(nx+1,j) .eq. 1) then  
+        if (maskC(nx+1,j) .eq. 1 .and. Periodic_x .eq. 0) then  
            etaC(nx,j)  = 0d0
            zetaC(nx,j) = 0d0
         endif
 
      enddo
-
+     
+     if (peri .ne. 0) call periodicBC(etaC,zetaC)
+     if (peri .ne. 0) call periodicBC(etaB,P)  !etaB = zero and is a dummy here
 !------------------------------------------------------------------------
 !     Shear and bulk viscosity calculation at the grid node
 !------------------------------------------------------------------------
@@ -293,6 +297,8 @@ subroutine ViscousCoeff_method1(utp,vtp)
      enddo
          
   endif
+  
+
       
   return
 end subroutine ViscousCoeff_method1
@@ -320,7 +326,7 @@ subroutine ViscousCoeff_method2(utp,vtp)
   include 'CB_mask.h'
   include 'CB_options.h'
   
-  integer i, j, rheo, summaskC
+  integer i, j, rheo, summaskC, peri
 
   double precision dudx, dvdy, dudy, dvdx, deno, denomin, denoT, pnode
   double precision utp(0:nx+2,0:ny+2), vtp(0:nx+2,0:ny+2)
@@ -328,6 +334,7 @@ subroutine ViscousCoeff_method2(utp,vtp)
   denomin = 2d-09 ! Hibler, 1979
 
   rheo = Rheology ! define local variable to speed up the code
+  peri = Periodic_x + Periodic_y ! =1 if we have periodic conditions
 
 !------------------------------------------------------------------------
 !     free slip boundary condition:
@@ -357,6 +364,8 @@ subroutine ViscousCoeff_method2(utp,vtp)
         enddo
      enddo
 
+     if (peri .ne. 0) call periodicBC(utp,vtp)    
+     
 !------------------------------------------------------------------------
 !     Shear and bulk viscosity calculation at the grid center
 !------------------------------------------------------------------------   
@@ -474,12 +483,12 @@ subroutine ViscousCoeff_method2(utp,vtp)
 
      do i = 1, nx+1
 
-        if (maskC(i,0) .eq. 1) then
+        if (maskC(i,0) .eq. 1 .and. Periodic_y .eq. 0) then
            etaC(i,1)  = 0d0
            zetaC(i,1) = 0d0
         endif
             
-        if (maskC(i,ny+1) .eq. 1) then
+        if (maskC(i,ny+1) .eq. 1 .and. Periodic_y .eq. 0) then
            etaC(i,ny)  = 0d0
            zetaC(i,ny) = 0d0
         endif
@@ -488,17 +497,20 @@ subroutine ViscousCoeff_method2(utp,vtp)
          
      do j = 1, ny+1
             
-        if (maskC(0,j) .eq. 1) then   
+        if (maskC(0,j) .eq. 1 .and. Periodic_x .eq. 0) then   
            etaC(1,j)  = 0d0
            zetaC(1,j) = 0d0
         endif
             
-        if (maskC(nx+1,j) .eq. 1) then  
+        if (maskC(nx+1,j) .eq. 1 .and. Periodic_x .eq. 0) then  
            etaC(nx,j)  = 0d0
            zetaC(nx,j) = 0d0
         endif
 
      enddo
+
+     if (peri .ne. 0) call periodicBC(etaC,zetaC)
+     if (peri .ne. 0) call periodicBC(etaB,P)  !etaB = zero and is a dummy here     
 
 !------------------------------------------------------------------------
 !     Shear viscosity calculation at the grid node (see p.2-118 PDF notebook)
@@ -760,7 +772,7 @@ subroutine ViscousCoeff_method3_and_4(utp,vtp)
   include 'CB_mask.h'
   include 'CB_options.h'
 
-  integer i, j, rheo, summaskC
+  integer i, j, rheo, summaskC, peri
 
   double precision dudx, dvdy, dudy, dvdx, deno, denomin, denoT
   double precision utp(0:nx+2,0:ny+2), vtp(0:nx+2,0:ny+2)
@@ -769,6 +781,7 @@ subroutine ViscousCoeff_method3_and_4(utp,vtp)
   denomin = 2d-09 ! Hibler, 1979
 
   rheo = Rheology ! define local variable to speed up the code
+  peri = Periodic_x + Periodic_y ! =1 if we have periodic conditions
 
 !------------------------------------------------------------------------
 !     free slip boundary condition:
@@ -798,7 +811,8 @@ subroutine ViscousCoeff_method3_and_4(utp,vtp)
         enddo
      enddo
 
-
+     if (peri .ne. 0) call periodicBC(utp,vtp)
+     
 !------------------------------------------------------------------------
 !     ep12 calculation at the grid node (see p.2-118 PDF notebook)
 !------------------------------------------------------------------------
@@ -993,12 +1007,12 @@ subroutine ViscousCoeff_method3_and_4(utp,vtp)
 
      do i = 1, nx+1
 
-        if (maskC(i,0) .eq. 1) then
+        if (maskC(i,0) .eq. 1 .and. Periodic_y .eq. 0) then
            etaC(i,1)  = 0d0
            zetaC(i,1) = 0d0
         endif
             
-        if (maskC(i,ny+1) .eq. 1) then
+        if (maskC(i,ny+1) .eq. 1 .and. Periodic_y .eq. 0) then
            etaC(i,ny)  = 0d0
            zetaC(i,ny) = 0d0
         endif
@@ -1007,17 +1021,20 @@ subroutine ViscousCoeff_method3_and_4(utp,vtp)
          
      do j = 1, ny+1
             
-        if (maskC(0,j) .eq. 1) then   
+        if (maskC(0,j) .eq. 1 .and. Periodic_x .eq. 0) then   
            etaC(1,j)  = 0d0
            zetaC(1,j) = 0d0
         endif
             
-        if (maskC(nx+1,j) .eq. 1) then  
+        if (maskC(nx+1,j) .eq. 1 .and. Periodic_x .eq. 0) then  
            etaC(nx,j)  = 0d0
            zetaC(nx,j) = 0d0
         endif
 
      enddo
+     
+     if (peri .ne. 0) call periodicBC(etaC,zetaC)
+     if (peri .ne. 0) call periodicBC(etaB,P)  !etaB = zero and is a dummy here          
 
 !------------------------------------------------------------------------
 !     Shear viscosity calculation at the grid node (see p.2-118 PDF notebook)
@@ -1145,122 +1162,135 @@ subroutine etaB_at_open_boundaries
   include 'parameter.h'
   include 'CB_DynVariables.h'
   include 'CB_mask.h'
+  include 'CB_options.h'
 
-  integer i, j, summaskC
+  integer i, j, summaskC, peri
 
 !------------------------------------------------------------------------                                                                                                      
 !     Set etaB to 0.0 at the open boundaries (see p.32-33 EC-2)                                                                                                                
-!------------------------------------------------------------------------                                                                                                      
+!------------------------------------------------------------------------  
 
-  etaB(1,1)=0d0
-  etaB(1,ny+1)=0d0
-  do j = 2, ny
-
-     summaskC = maskC(0,j) + maskC(1,j) + &
-          maskC(1,j-1) + maskC(0,j-1)
-
-     if (summaskC .ge. 2) then
-
-        if (summaskC .ge. 3) then
-           etaB(1,j) = 0d0
-        elseif (summaskC .eq. 2) then
-           if (maskC(0,j) .eq. 0 .and. maskC(1,j) .eq. 0) then
-              etaB(1,j) = 0d0
-           elseif (maskC(0,j-1) .eq. 0 .and. maskC(1,j-1) .eq. 0) then
-              etaB(1,j) = 0d0
-           elseif (maskC(0,j) .eq. 0 .and. maskC(0,j-1) .eq. 0) then
-              ! don't do anything...it can be non zero                                                                                                                   
-           else
-              print *, 'wowowo' ! ocean on the left is not possible                                                                                                         
-           endif
-
-        endif
-
-     endif
-
-  enddo
-
-  etaB(nx+1,1)=0d0
-  etaB(nx+1,ny+1)=0d0
-  do j = 2, ny
-        
-     summaskC = maskC(nx,j) + maskC(nx+1,j) + &
-          maskC(nx+1,j-1) + maskC(nx,j-1)
-
-     if (summaskC .ge. 2) then
-
-        if (summaskC .ge. 3) then
-           etaB(nx+1,j) = 0d0
-        elseif (summaskC .eq. 2) then
-           if (maskC(nx,j) .eq. 0 .and. maskC(nx+1,j) .eq. 0) then
-              etaB(nx+1,j) = 0d0
-           elseif (maskC(nx,j-1) .eq. 0 .and. maskC(nx+1,j-1) .eq. 0) then
-              etaB(nx+1,j) = 0d0
-           elseif (maskC(nx+1,j) .eq. 0 .and. maskC(nx+1,j-1) .eq. 0) then
-              ! don't do anything...it can be non zero                                                                                                                   
-           else
-              print *, 'wowowo' ! ocean on the right is not possible                                                                                                        
-           endif
-
-        endif
-
-     endif
-
-  enddo
-
-
-  do i = 2, nx
-
-     summaskC = maskC(i-1,1) + maskC(i,1) + &
-          maskC(i-1,0) + maskC(i,0)
-
-     if (summaskC .ge. 2) then
-
-        if (summaskC .ge. 3) then
-           etaB(i,1) = 0d0
-        elseif (summaskC .eq. 2) then
-           if (maskC(i-1,1) .eq. 0 .and. maskC(i-1,0) .eq. 0) then
-              etaB(i,1) = 0d0
-           elseif (maskC(i,1) .eq. 0 .and. maskC(i,0) .eq. 0) then
-              etaB(i,1) = 0d0
-           elseif (maskC(i-1,0) .eq. 0 .and. maskC(i,0) .eq. 0) then
-              ! don't do anything...it can be non zero                                                                                                                   
-           else
-              print *, 'wowowo' ! ocean below is not possible                                                                                                               
-           endif
-
-        endif
-
-     endif
-
-  enddo
+  peri = Periodic_x + Periodic_y ! =1 if we have periodic conditions                                                                                                    
   
-  do i = 2, nx
+  if (peri .ne. 2) then
+    etaB(1,1)=0d0
+    etaB(1,ny+1)=0d0
+    etaB(nx+1,1)=0d0
+    etaB(nx+1,ny+1)=0d0
+  endif  
 
-     summaskC = maskC(i-1,ny+1) + maskC(i,ny+1) + &
-          maskC(i-1,ny) + maskC(i,ny)
-     
-     if (summaskC .ge. 2) then
+  if (Periodic_x .eq. 0) then
+      
+      do j = 2, ny
 
-        if (summaskC .ge. 3) then
-           etaB(i,ny+1) = 0d0
-        elseif (summaskC .eq. 2) then
-           if (maskC(i-1,ny+1) .eq. 0 .and. maskC(i-1,ny) .eq. 0) then
-              etaB(i,ny+1) = 0d0
-           elseif (maskC(i,ny+1) .eq. 0 .and. maskC(i,ny) .eq. 0) then
-              etaB(i,ny+1) = 0d0
-           elseif (maskC(i-1,ny+1) .eq. 0 .and. maskC(i,ny+1) .eq. 0) then
-              ! don't do anything...it can be non zero                                                                                                                      
-           else
-              print *, 'wowowo' ! ocean above is not possible                                                                                                               
-           endif
-           
-        endif
+	summaskC = maskC(0,j) + maskC(1,j) + &
+	      maskC(1,j-1) + maskC(0,j-1)
 
-     endif
+	if (summaskC .ge. 2) then
 
-  enddo
+	    if (summaskC .ge. 3) then
+	      etaB(1,j) = 0d0
+	    elseif (summaskC .eq. 2) then
+	      if (maskC(0,j) .eq. 0 .and. maskC(1,j) .eq. 0) then
+		  etaB(1,j) = 0d0
+	      elseif (maskC(0,j-1) .eq. 0 .and. maskC(1,j-1) .eq. 0) then
+		  etaB(1,j) = 0d0
+	      elseif (maskC(0,j) .eq. 0 .and. maskC(0,j-1) .eq. 0) then
+		  ! don't do anything...it can be non zero                                                                                                                   
+	      else
+		  print *, 'wowowo' ! ocean on the left is not possible                                                                                                         
+	      endif
 
+	    endif
+
+	endif
+
+      enddo
+
+      do j = 2, ny
+	    
+	summaskC = maskC(nx,j) + maskC(nx+1,j) + &
+	      maskC(nx+1,j-1) + maskC(nx,j-1)
+
+	if (summaskC .ge. 2) then
+
+	    if (summaskC .ge. 3) then
+	      etaB(nx+1,j) = 0d0
+	    elseif (summaskC .eq. 2) then
+	      if (maskC(nx,j) .eq. 0 .and. maskC(nx+1,j) .eq. 0) then
+		  etaB(nx+1,j) = 0d0
+	      elseif (maskC(nx,j-1) .eq. 0 .and. maskC(nx+1,j-1) .eq. 0) then
+		  etaB(nx+1,j) = 0d0
+	      elseif (maskC(nx+1,j) .eq. 0 .and. maskC(nx+1,j-1) .eq. 0) then
+		  ! don't do anything...it can be non zero                                                                                                                   
+	      else
+		  print *, 'wowowo' ! ocean on the right is not possible                                                                                                        
+	      endif
+
+	    endif
+
+	endif
+
+      enddo
+      
+  endif 
+
+  if (Periodic_y .eq. 0) then  
+  
+      do i = 2, nx
+
+	summaskC = maskC(i-1,1) + maskC(i,1) + &
+	      maskC(i-1,0) + maskC(i,0)
+
+	if (summaskC .ge. 2) then
+
+	    if (summaskC .ge. 3) then
+	      etaB(i,1) = 0d0
+	    elseif (summaskC .eq. 2) then
+	      if (maskC(i-1,1) .eq. 0 .and. maskC(i-1,0) .eq. 0) then
+		  etaB(i,1) = 0d0
+	      elseif (maskC(i,1) .eq. 0 .and. maskC(i,0) .eq. 0) then
+		  etaB(i,1) = 0d0
+	      elseif (maskC(i-1,0) .eq. 0 .and. maskC(i,0) .eq. 0) then
+		  ! don't do anything...it can be non zero                                                                                                                   
+	      else
+		  print *, 'wowowo' ! ocean below is not possible                                                                                                               
+	      endif
+
+	    endif
+
+	endif
+
+      enddo
+      
+      do i = 2, nx
+
+	summaskC = maskC(i-1,ny+1) + maskC(i,ny+1) + &
+	      maskC(i-1,ny) + maskC(i,ny)
+	
+	if (summaskC .ge. 2) then
+
+	    if (summaskC .ge. 3) then
+	      etaB(i,ny+1) = 0d0
+	    elseif (summaskC .eq. 2) then
+	      if (maskC(i-1,ny+1) .eq. 0 .and. maskC(i-1,ny) .eq. 0) then
+		  etaB(i,ny+1) = 0d0
+	      elseif (maskC(i,ny+1) .eq. 0 .and. maskC(i,ny) .eq. 0) then
+		  etaB(i,ny+1) = 0d0
+	      elseif (maskC(i-1,ny+1) .eq. 0 .and. maskC(i,ny+1) .eq. 0) then
+		  ! don't do anything...it can be non zero                                                                                                                      
+	      else
+		  print *, 'wowowo' ! ocean above is not possible                                                                                                               
+	      endif
+	      
+	    endif
+
+	endif
+
+      enddo
+      
+  endif   
+      
   return
 end subroutine etaB_at_open_boundaries
 

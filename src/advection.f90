@@ -28,19 +28,27 @@
       include 'CB_mask.h'
       include 'CB_options.h'
 
-      integer i, j
+      integer i, j, peri
       double precision, intent(in)    :: upts(0:nx+2,0:ny+2), vpts(0:nx+2,0:ny+2)
       double precision, intent(in)    :: utp(0:nx+2,0:ny+2), vtp(0:nx+2,0:ny+2)
-      double precision, intent(inout) :: hin(0:nx+1,0:ny+1), Ain(0:nx+1,0:ny+1)
-      double precision, intent(out)   :: hout(0:nx+1,0:ny+1), Aout(0:nx+1,0:ny+1)
+      double precision, intent(inout) :: hin(0:nx+2,0:ny+2), Ain(0:nx+2,0:ny+2)
+      double precision, intent(out)   :: hout(0:nx+2,0:ny+2), Aout(0:nx+2,0:ny+2)
       double precision                :: ustar(0:nx+2,0:ny+2), vstar(0:nx+2,0:ny+2)
-      double precision                :: hstar(0:nx+1,0:ny+1), Astar(0:nx+1,0:ny+1)
+      double precision                :: hstar(0:nx+2,0:ny+2), Astar(0:nx+2,0:ny+2)
       double precision dFx(nx,ny), dFy(nx,ny)
 
-      
+!------------------------------------------------------------------------ 
+!     make periodic conditions 
+!------------------------------------------------------------------------
+
+      peri = Periodic_x + Periodic_y
+      if (peri .ne. 0)   call periodicBC(hin,Ain)     
+
 !------------------------------------------------------------------------ 
 !     set dhin/dx, dAin/dx = 0 at the outside cell when there is an open bc 
 !------------------------------------------------------------------------ 
+
+	  if (Periodic_y .eq. 0) then
 
             do i = 0, nx+1
                
@@ -65,7 +73,11 @@
                endif
  
             enddo
-
+            
+	  endif            
+	  
+	  if (Periodic_x .eq. 0) then
+	  
             do j = 0, ny+1
 
                if (maskC(0,j) .eq. 1) then
@@ -89,8 +101,10 @@
                endif
 
             enddo
-
-            if ( adv_scheme .eq. 'upwind' ) then
+            
+	  endif
+	  
+          if ( adv_scheme .eq. 'upwind' ) then
 
 !------------------------------------------------------------------------
 !     compute the difference of the flux for thickness 
@@ -143,7 +157,7 @@
                   enddo
                enddo
 
-            elseif ( adv_scheme .eq. 'upwindRK2' ) then
+          elseif ( adv_scheme .eq. 'upwindRK2' ) then
                
 !------------------------------------------------------------------------
 !     predictor: compute the difference of the flux for thickness 
@@ -200,6 +214,10 @@
 !     set dhstar/dx, dAstar/dx = 0 at the outside cell when there is an open bc 
 !------------------------------------------------------------------------ 
 
+	    if (peri .ne. 0)   call periodicBC(hstar,Astar) 
+	    
+	    if (Periodic_y .eq. 0) then
+	    
 	      do i = 0, nx+1
                
 		if (maskC(i,0) .eq. 1) then
@@ -223,7 +241,11 @@
 		endif
  
 	      enddo
-
+	     
+	    endif 
+	     
+	    if (Periodic_x .eq. 0) then 
+	      
 	      do j = 0, ny+1
 
 		if (maskC(0,j) .eq. 1) then
@@ -247,7 +269,9 @@
 		endif
 
 	      enddo
-
+	     
+	    endif 
+	    
 !------------------------------------------------------------------------
 !     corrector: compute the difference of the flux for thickness 
 !------------------------------------------------------------------------
@@ -303,9 +327,12 @@
                enddo
 
 
-	      endif
+	  endif
 
+        if (peri .ne. 0)   call periodicBC(hout,Aout)	
+        
       return
+      
     end subroutine advection
 
     subroutine calc_dFx (utp, tracertp, dFx)
@@ -316,7 +343,7 @@
       include 'CB_mask.h'
 
       integer i, j
-      double precision, intent(in) :: utp(0:nx+2,0:ny+2),tracertp(0:nx+1,0:ny+1)
+      double precision, intent(in) :: utp(0:nx+2,0:ny+2),tracertp(0:nx+2,0:ny+2)
       double precision, intent(out):: dFx(nx,ny)
       double precision :: F1, F2
 
@@ -354,7 +381,7 @@
       include 'CB_mask.h'
 
       integer i, j
-      double precision, intent(in) :: vtp(0:nx+2,0:ny+2),tracertp(0:nx+1,0:ny+1)
+      double precision, intent(in) :: vtp(0:nx+2,0:ny+2),tracertp(0:nx+2,0:ny+2)
       double precision, intent(out):: dFy(nx,ny)
       double precision :: F1, F2
 

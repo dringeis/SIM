@@ -52,7 +52,7 @@
       integer, intent(in) :: tstep, expno
       integer ::  year    ! current year
 
-      integer :: k, tot_its
+      integer :: k, tot_its, peri
       integer, save :: sumtot_its, nbfail
 
       double precision :: h2sec = 3.6d03            ! [sec] / [hour]
@@ -65,6 +65,8 @@
 
       year = date%year
       datestr = datetime_str_6(date)
+      
+      peri = Periodic_x + Periodic_y
 
       if (tstep .eq. 1) nbfail = 0 ! number of failures of the nonlinear solver during the run
 
@@ -80,7 +82,9 @@
             un2 = un1
             vn2 = vn1
          endif
-
+         
+	 if (peri .ne. 0) call periodicBC(uice,vice)
+	 
          un1 = uice ! previous time step solution
          vn1 = vice ! previous time step solution
          hn1 = h
@@ -214,12 +218,7 @@
             enddo
 
 !------- End of Newton loop ----------------------------------------------            
-         
-            if (tstep .eq. 4) then
-               call stress_strain (uice, vice, date, 9, expno)
-               stop
-            endif
-         
+                 
          elseif (solver .eq. 3) then ! EVP solver 
 
             call evp_solver(tstep)
@@ -232,6 +231,11 @@
 
       endif
 
+!      if (tstep .eq. 4) then
+!           call stress_strain (uice, vice, date, 9, expno)
+!             stop
+!      endif
+      
 !------------------------------------------------------------------------
 !     Integrate the continuity equations to get  h,A^t (and other tracers) 
 !     from h,A^t-1. We use uice and vice (u^t and v&t) to advect the tracers.
