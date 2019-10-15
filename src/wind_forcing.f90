@@ -27,6 +27,7 @@
       integer i, j, imax, jmax 
       integer  ncell
       integer, parameter :: h2sec = 3600
+      integer  year, month, day, hour, minute, second, milli
 
       double precision tauax, tauay, wm, uairmax, uairmean,alpha
       double precision uair1(0:nx+2,0:ny+2),vair1(0:nx+2,0:ny+2)
@@ -36,6 +37,14 @@
       logical :: verbose = .false.
      
       delta =  int(deltax)/1000
+
+      year = date%year
+      month = date%month
+      day = date%day
+      hour = date%hour
+      minute = date%minute
+      second = date%second
+      milli = date%milli
 
 !------------------------------------------------------------------------
 !     load wind data for a given date and time
@@ -109,8 +118,8 @@
          do i = 1, nx+1
             do j = 1, ny+1
                
-               uair(i,j) = 10d0 
-               vair(i,j) =  0d0
+               uair(i,j) = 0d0 
+               vair(i,j) = -10d0
                
 !     call random_number(rdnumb)
 !               uair(i,j) = wm * (rdnumb - 0.5d0)
@@ -119,6 +128,26 @@
                
             enddo
          enddo
+         
+      elseif ( Wind .eq. 'ramp' ) then
+         
+!         wm = 10.0d0
+
+         do i = 1, nx+1
+            do j = 1, ny+1
+               
+               vair(i,j) = -(5.5556d-7*milli +5.5556d-4*second + &
+				3.333d-2*minute + 2d0*hour + 48d0*(day-1d0))
+               uair(i,j) =  0d0
+!               uair(i,j) = min(uair(i,j), 10d0)
+!     call random_number(rdnumb)
+!               uair(i,j) = wm * (rdnumb - 0.5d0)
+!               call random_number(rdnumb)
+!     vair(i,j) = wm * (rdnumb - 0.5d0)
+               
+            enddo
+         enddo
+
          
       endif
       

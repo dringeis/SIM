@@ -72,7 +72,7 @@
 
       if ( Dynamic ) then
 
-         if ( Wind .eq. '6hours' ) then
+         if ( Wind .eq. '6hours' .or. Wind .eq. 'ramp' ) then
 
             call wind_forcing (date) ! get wind forcing field
 
