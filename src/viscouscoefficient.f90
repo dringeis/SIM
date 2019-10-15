@@ -1379,8 +1379,8 @@ subroutine MEBcoeff
             do j = 0, ny+1
 
                etaC(i,j)  = Lame1*Deltat
-               zetaC(i,j) = 0d0 
-               etaB(i,j)  = 0d0
+               zetaC(i,j) = (Lame1 + Lame2)*Deltat
+               etaB(i,j)  = Lame1*Deltat
                hAfunc(i,j) = 1d0
                hAfuncB(i,j) = 1d0
             enddo
@@ -1401,12 +1401,12 @@ subroutine MEBcoeff
              if (IMEX .eq. 0) dfactor(i,j) = 1d0 !If IMEX=1, the following coefficients are computed 
                                                  !using the implicit damage : d = d*dfactor
 
-             if (maskC(i,j) .ge. 1d0) then
+             if (maskC(i,j) .eq. 1d0) then
 
                 hAfunc(i,j)  = h(i,j) * dexp(-C * ( 1d0 - A(i,j) ) )
                 
                 GammaMEB(i,j) = 1d0 / (1d0 + (Deltat * hAfunc(i,j)) / &
-                           (lambda0 * ((1-dam(i,j))*dfactor(i,j))**(alpha-1d0))) 
+                           (lambda0 * ((dam(i,j))*dfactor(i,j))**(alpha-1d0))) 
 
              else
              
@@ -1415,15 +1415,15 @@ subroutine MEBcoeff
                 
              endif
 
-             etaC(i,j)  = Lame1*hAfunc(i,j)*(1-dam(i,j))*dfactor(i,j)* &   !Elastic stiffness
+             etaC(i,j)  = Lame1*hAfunc(i,j)*(dam(i,j))*dfactor(i,j)* &   !Elastic stiffness
                                                  Deltat * GammaMEB(i,j)
              zetaC(i,j) = hAfunc(i,j)*(Lame1 + Lame2)*Deltat * &
                                  dam(i,j)* dfactor(i,j) * GammaMEB(i,j)
              P(i,j) = 0d0
              
-             CoheC(i,j) = Cohe!*hAfunc(i,j)
-             sigtC(i,j) = sigt!*hAfunc(i,j)
-             sigcC(i,j) = sigc!*hAfunc(i,j)
+             CoheC(i,j) = Cohe
+             sigtC(i,j) = sigt
+             sigcC(i,j) = sigc
 
             enddo
          enddo
@@ -1489,4 +1489,3 @@ subroutine MEBcoeff
 
   return
 end subroutine MEBcoeff
-

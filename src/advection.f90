@@ -43,7 +43,8 @@
 
       peri = Periodic_x + Periodic_y
       if (peri .ne. 0)   call periodicBC(hin,Ain)     
-
+      if (peri .ne. 0)   call periodicBC(utp,vtp)
+      if (peri .ne. 0)   call periodicBC(upts,vpts)
 !------------------------------------------------------------------------ 
 !     set dhin/dx, dAin/dx = 0 at the outside cell when there is an open bc 
 !------------------------------------------------------------------------ 
